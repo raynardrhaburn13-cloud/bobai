@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOB - Your Personal AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bob: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        accent: {
+                            cyan: '#06b6d4',
+                            violet: '#8b5cf6',
+                            emerald: '#10b981',
+                            rose: '#f43f5e',
+                            amber: '#f59e0b',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.2s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(14, 165, 233, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(14, 165, 233, 0.8), 0 0 40px rgba(14, 165, 233, 0.4)' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(5px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Glass morphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-light {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Code blocks */
+        pre { position: relative; }
+        pre code { border-radius: 0.5rem; font-size: 0.875rem; line-height: 1.6; }
+        
+        /* Typing indicator */
+        .typing-dot {
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        /* Message animations */
+        .message-enter { animation: fadeIn 0.3s ease-out; }
+        
+        /* Tool cards hover */
+        .tool-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tool-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Sidebar transition */
+        .sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Input glow */
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+        }
+        
+        /* Status indicator pulse */
+        .status-online {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: statusPulse 2s infinite;
+        }
+        @keyframes statusPulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        /* Dark mode transitions */
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        /* Markdown content styles */
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-content p { margin-bottom: 0.75rem; line-height: 1.7; }
+        .markdown-content ul, .markdown-content ol { margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .markdown-content li { margin-bottom: 0.25rem; }
+        .markdown-content code { 
+            background: rgba(100, 116, 139, 0.3); 
+            padding: 0.2rem 0.4rem; 
+            border-radius: 0.25rem; 
+            font-size: 0.875em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .markdown-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+        .markdown-content blockquote {
+            border-left: 3px solid #0ea5e9;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .markdown-content th, .markdown-content td {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .markdown-content th {
+            background: rgba(30, 41, 59, 0.5);
+            font-weight: 600;
+        }
+        
+        /* Light mode markdown adjustments */
+        html:not(.dark) .markdown-content code {
+            background: rgba(203, 213, 225, 0.5);
+        }
+        html:not(.dark) .markdown-content blockquote {
+            color: #64748b;
+        }
+        
+        /* Mobile bottom nav */
+        @media (max-width: 768px) {
+            .mobile-nav-item.active {
+                color: #0ea5e9;
+            }
+            .mobile-nav-item.active svg {
+                fill: currentColor;
+            }
+        }
+        
+        /* Hide scrollbar for conversation list but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="theme-transition bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased overflow-hidden h-screen w-screen">
+
+    <!-- App Container -->
+    <div id="app" class="h-full w-full flex flex-col md:flex-row relative">
+        
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-sm transition-opacity" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar-transition fixed md:relative z-50 md:z-auto w-72 h-full -translate-x-full md:translate-x-0 flex flex-col glass dark:glass border-r border-slate-200 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80">
+            
+            <!-- Sidebar Header -->
+            <div class="flex items-center gap-3 p-4 border-b border-slate-200 dark:border-slate-800/50">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-bob-500 to-accent-violet flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-bob-500/30">
+                        B
+                    </div>
+                    <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 status-online"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h1 class="font-bold text-lg leading-tight truncate">BOB</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Your Personal AI Assistant</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- New Chat Button -->
+            <div class="p-3">
+                <button onclick="createConversation()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-bob-600 hover:bg-bob-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-bob-600/20 hover:shadow-bob-500/30 active:scale-[0.98]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    New Conversation
+                </button>
+            </div>
+
+            <!-- Conversation History -->
+            <div class="flex-1 overflow-y-auto no-scrollbar px-3 pb-3">
+                <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-2">Recent</div>
+                <div id="conversationList" class="space-y-1">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="p-3 border-t border-slate-200 dark:border-slate-800/50 space-y-1">
+                <button onclick="navigateTo('tasks')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <svg class="w-5 h-5 text-accent-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    Tasks
+                </button>
+                <button onclick="navigateTo('projects')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <svg class="w-5 h-5 text-accent-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                    Projects
+                </button>
+                <button onclick="navigateTo('automations')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <svg class="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Automations
+                </button>
+                <button onclick="navigateTo('settings')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Settings
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+            
+            <!-- Top Bar -->
+            <header class="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/40 glass dark:glass bg-white/60 dark:bg-slate-900/60 z-10">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div id="currentModeIndicator" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/60 text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <svg class="w-4 h-4 text-bob-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span>Chat</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <!-- Mode Switcher -->
+                    <div class="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800/60 rounded-lg p-1">
+                        <button onclick="setMode('chat')" id="modeChat" class="mode-btn px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white">Chat</button>
+                        <button onclick="setMode('research')" id="modeResearch" class="mode-btn px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Research</button>
+                        <button onclick="setMode('code')" id="modeCode" class="mode-btn px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Code</button>
+                        <button onclick="setMode('roblox')" id="modeRoblox" class="mode-btn px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Roblox</button>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <button onclick="toggleNotifications()" class="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        <span id="notificationBadge" class="absolute top-1.5 right-1.5 w-2 h-2 bg-accent-rose rounded-full hidden"></span>
+                    </button>
+                    
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleTheme()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <svg id="themeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Notifications Panel -->
+            <div id="notificationsPanel" class="hidden absolute top-14 right-4 w-80 glass dark:glass bg-white/90 dark:bg-slate-900/90 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-30 overflow-hidden">
+                <div class="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <h3 class="font-semibold text-sm">Notifications</h3>
+                    <button onclick="clearNotifications()" class="text-xs text-bob-500 hover:text-bob-600">Clear all</button>
+                </div>
+                <div id="notificationsList" class="max-h-64 overflow-y-auto">
+                    <div class="p-4 text-center text-sm text-slate-400">No new notifications</div>
+                </div>
+            </div>
+
+            <!-- Content Views -->
+            <div id="contentArea" class="flex-1 overflow-hidden relative">
+                
+                <!-- CHAT VIEW -->
+                <div id="chatView" class="absolute inset-0 flex flex-col">
+                    <!-- Messages Area -->
+                    <div id="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 space-y-6 scroll-smooth">
+                        <!-- Welcome Message -->
+                        <div id="welcomeMessage" class="flex flex-col items-center justify-center h-full text-center px-4">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-bob-500 to-accent-violet flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-bob-500/20 mb-6 animate-float">
+                                B
+                            </div>
+                            <h2 class="text-2xl font-bold mb-2">Hello, I'm BOB</h2>
+                            <p class="text-slate-500 dark:text-slate-400 max-w-md mb-8">Your personal AI assistant. I can chat, research the web, help with code, assist with Roblox development, manage tasks, and connect to your automations.</p>
+                            
+                            <!-- Quick Actions -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+                                <button onclick="sendQuickMessage('Help me research a topic')" class="tool-card flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:border-bob-500/50 text-left">
+                                    <div class="w-10 h-10 rounded-lg bg-bob-100 dark:bg-bob-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-bob-600 dark:text-bob-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">Web Research</div>
+                                        <div class="text-xs text-slate-400">Search and summarize</div>
+                                    </div>
+                                </button>
+                                <button onclick="sendQuickMessage('Help me write some code')" class="tool-card flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:border-accent-emerald/50 text-left">
+                                    <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">Code Assistant</div>
+                                        <div class="text-xs text-slate-400">Write & debug code</div>
+                                    </div>
+                                </button>
+                                <button onclick="sendQuickMessage('Help with a Roblox game')" class="tool-card flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:border-accent-rose/50 text-left">
+                                    <div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">Roblox Dev</div>
+                                        <div class="text-xs text-slate-400">Lua scripts & GUIs</div>
+                                    </div>
+                                </button>
+                                <button onclick="sendQuickMessage('Create a new task for me')" class="tool-card flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:border-accent-amber/50 text-left">
+                                    <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">Task Manager</div>
+                                        <div class="text-xs text-slate-400">Organize work</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Messages will be appended here -->
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="border-t border-slate-200 dark:border-slate-800/50 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                        <!-- File Preview -->
+                        <div id="filePreview" class="hidden mb-3 flex items-center gap-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span id="filePreviewName" class="text-sm flex-1 truncate">file.txt</span>
+                            <button onclick="clearFile()" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="hidden mb-3">
+                            <div class="relative inline-block">
+                                <img id="imagePreviewImg" class="h-20 rounded-lg border border-slate-200 dark:border-slate-700" src="" alt="Preview">
+                                <button onclick="clearImage()" class="absolute -top-2 -right-2 w-6 h-6 bg-accent-rose text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end gap-2 max-w-4xl mx-auto">
+                            <!-- Attach Button -->
+                            <button onclick="document.getElementById('fileInput').click()" class="p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                            </button>
+                            <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)" accept="*/*">
+                            
+                            <!-- Image Button -->
+                            <button onclick="document.getElementById('imageInput').click()" class="p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </button>
+                            <input type="file" id="imageInput" class="hidden" onchange="handleImageSelect(event)" accept="image/*">
+
+                            <!-- Text Input -->
+                            <div class="flex-1 relative">
+                                <textarea 
+                                    id="messageInput" 
+                                    rows="1"
+                                    placeholder="Message BOB..."
+                                    class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border-0 resize-none focus:ring-2 focus:ring-bob-500/50 input-glow text-sm max-h-32"
+                                    onkeydown="handleKeyDown(event)"
+                                    oninput="autoResize(this)"
+                                ></textarea>
+                            </div>
+
+                            <!-- Voice Button -->
+                            <button id="voiceBtn" onclick="toggleVoiceInput()" class="p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-accent-rose flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                            </button>
+
+                            <!-- Send Button -->
+                            <button onclick="sendMessage()" id="sendBtn" class="p-3 rounded-xl bg-bob-600 hover:bg-bob-500 text-white transition-all shadow-lg shadow-bob-600/20 flex-shrink-0 active:scale-95">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                            </button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-[10px] text-slate-400">BOB can make mistakes. Consider checking important information.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TASKS VIEW -->
+                <div id="tasksView" class="hidden absolute inset-0 overflow-y-auto p-6">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold">Tasks</h2>
+                                <p class="text-slate-500 dark:text-slate-400">Manage your work and stay organized</p>
+                            </div>
+                            <button onclick="showAddTaskModal()" class="px-4 py-2 bg-bob-600 hover:bg-bob-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-bob-600/20 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Add Task
+                            </button>
+                        </div>
+
+                        <!-- Task Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="text-2xl font-bold text-bob-500" id="taskCountTotal">0</div>
+                                <div class="text-xs text-slate-500">Total</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="text-2xl font-bold text-accent-emerald" id="taskCountActive">0</div>
+                                <div class="text-xs text-slate-500">Active</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="text-2xl font-bold text-accent-rose" id="taskCountOverdue">0</div>
+                                <div class="text-xs text-slate-500">Overdue</div>
+                            </div>
+                        </div>
+
+                        <!-- Task Filters -->
+                        <div class="flex gap-2 mb-4">
+                            <button onclick="filterTasks('all')" class="task-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-bob-100 dark:bg-bob-900/30 text-bob-700 dark:text-bob-300" data-filter="all">All</button>
+                            <button onclick="filterTasks('active')" class="task-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="active">Active</button>
+                            <button onclick="filterTasks('completed')" class="task-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" data-filter="completed">Completed</button>
+                        </div>
+
+                        <!-- Task List -->
+                        <div id="taskList" class="space-y-2">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROJECTS VIEW -->
+                <div id="projectsView" class="hidden absolute inset-0 overflow-y-auto p-6">
+                    <div class="max-w-4xl mx-auto">
+                        <h2 class="text-2xl font-bold mb-2">Projects</h2>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6">Organize your work into projects</p>
+                        
+                        <div id="projectsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AUTOMATIONS VIEW -->
+                <div id="automationsView" class="hidden absolute inset-0 overflow-y-auto p-6">
+                    <div class="max-w-4xl mx-auto">
+                        <h2 class="text-2xl font-bold mb-2">Automations</h2>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6">Connect BOB to n8n and other automation tools</p>
+                        
+                        <!-- n8n Connection -->
+                        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 mb-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-cyan to-bob-500 flex items-center justify-center text-white font-bold shadow-lg">n8n</div>
+                                <div>
+                                    <h3 class="font-semibold">n8n Workflow</h3>
+                                    <p class="text-sm text-slate-500">Connect to your n8n instance</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <span id="n8nStatus" class="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500">Not configured</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Webhook URL</label>
+                                    <input type="text" id="n8nWebhookUrl" placeholder="https://your-n8n.app.n8n.cloud/webhook/..." class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="testN8nConnection()" class="px-4 py-2 bg-bob-600 hover:bg-bob-500 text-white rounded-lg text-sm font-medium transition-colors">Test Connection</button>
+                                    <button onclick="saveN8nConfig()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors">Save</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Automation Triggers -->
+                        <h3 class="font-semibold mb-3">Automation Triggers</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3">
+                                    <svg class="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-sm">New Message Trigger</div>
+                                        <div class="text-xs text-slate-500">Trigger n8n workflow on new messages</div>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="triggerNewMessage" class="sr-only peer" onchange="toggleAutomation('newMessage')">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-bob-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3">
+                                    <svg class="w-5 h-5 text-accent-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <div>
+                                        <div class="font-medium text-sm">File Upload Trigger</div>
+                                        <div class="text-xs text-slate-500">Process files through n8n workflow</div>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="triggerFileUpload" class="sr-only peer" onchange="toggleAutomation('fileUpload')">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-bob-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS VIEW -->
+                <div id="settingsView" class="hidden absolute inset-0 overflow-y-auto p-6">
+                    <div class="max-w-2xl mx-auto">
+                        <h2 class="text-2xl font-bold mb-6">Settings</h2>
+                        
+                        <!-- API Configuration -->
+                        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 mb-6">
+                            <h3 class="font-semibold mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-bob-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                API Configuration
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">BOB API Endpoint</label>
+                                    <input type="text" id="apiEndpoint" value="https://api.bob-ai.local/v1" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none font-mono">
+                                    <p class="text-xs text-slate-500 mt-1">Your BOB backend API URL</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">API Key</label>
+                                    <input type="password" id="apiKey" placeholder="sk-..." class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none font-mono">
+                                </div>
+                                <button onclick="saveApiConfig()" class="px-4 py-2 bg-bob-600 hover:bg-bob-500 text-white rounded-lg text-sm font-medium transition-colors">Save API Settings</button>
+                            </div>
+                        </div>
+
+                        <!-- Appearance -->
+                        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 mb-6">
+                            <h3 class="font-semibold mb-4">Appearance</h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium text-sm">Theme</div>
+                                    <div class="text-xs text-slate-500">Choose your preferred appearance</div>
+                                </div>
+                                <select id="themeSelect" onchange="changeTheme(this.value)" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-sm">
+                                    <option value="dark">Dark</option>
+                                    <option value="light">Light</option>
+                                    <option value="system">System</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Voice Settings -->
+                        <div class="p-6 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                            <h3 class="font-semibold mb-4">Voice</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="font-medium text-sm">Voice Input</div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="voiceInputEnabled" class="sr-only peer" checked>
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-bob-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="font-medium text-sm">Voice Output</div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="voiceOutputEnabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-bob-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD VIEW -->
+                <div id="dashboardView" class="hidden absolute inset-0 overflow-y-auto p-6">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold mb-2">Dashboard</h2>
+                            <p class="text-slate-500 dark:text-slate-400">Welcome back! Here's everything at a glance.</p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-bob-100 dark:bg-bob-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-bob-600 dark:text-bob-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    </div>
+                                    <div class="text-2xl font-bold" id="dashChatCount">0</div>
+                                </div>
+                                <div class="text-xs text-slate-500">Conversations</div>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                    </div>
+                                    <div class="text-2xl font-bold" id="dashTaskCount">0</div>
+                                </div>
+                                <div class="text-xs text-slate-500">Active Tasks</div>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                    </div>
+                                    <div class="text-2xl font-bold" id="dashProjectCount">0</div>
+                                </div>
+                                <div class="text-xs text-slate-500">Projects</div>
+                            </div>
+                            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    </div>
+                                    <div class="text-2xl font-bold" id="dashAutoCount">0</div>
+                                </div>
+                                <div class="text-xs text-slate-500">Automations</div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions & Recent -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Quick Actions -->
+                            <div class="p-6 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <h3 class="font-semibold mb-4">Quick Actions</h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button onclick="createConversation(); navigateTo('chat');" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-bob-50 dark:hover:bg-bob-900/20 border border-slate-200 dark:border-slate-700/50 hover:border-bob-500/30 transition-all text-left">
+                                        <svg class="w-6 h-6 text-bob-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                        <div class="font-medium text-sm">New Chat</div>
+                                    </button>
+                                    <button onclick="navigateTo('tasks'); showAddTaskModal();" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-slate-200 dark:border-slate-700/50 hover:border-emerald-500/30 transition-all text-left">
+                                        <svg class="w-6 h-6 text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                        <div class="font-medium text-sm">Add Task</div>
+                                    </button>
+                                    <button onclick="navigateTo('automations')" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 border border-slate-200 dark:border-slate-700/50 hover:border-cyan-500/30 transition-all text-left">
+                                        <svg class="w-6 h-6 text-cyan-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <div class="font-medium text-sm">Run Automation</div>
+                                    </button>
+                                    <button onclick="navigateTo('settings')" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-violet-50 dark:hover:bg-violet-900/20 border border-slate-200 dark:border-slate-700/50 hover:border-violet-500/30 transition-all text-left">
+                                        <svg class="w-6 h-6 text-violet-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <div class="font-medium text-sm">Configure</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- System Status -->
+                            <div class="p-6 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50">
+                                <h3 class="font-semibold mb-4">System Status</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-emerald-500 status-online"></div>
+                                            <span class="text-sm">BOB AI Core</span>
+                                        </div>
+                                        <span class="text-xs text-emerald-500 font-medium">Online</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                            <span class="text-sm">Chat Service</span>
+                                        </div>
+                                        <span class="text-xs text-emerald-500 font-medium">Operational</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                            <span class="text-sm">Web Research</span>
+                                        </div>
+                                        <span class="text-xs text-emerald-500 font-medium">Operational</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                                            <span class="text-sm">n8n Integration</span>
+                                        </div>
+                                        <span class="text-xs text-slate-400 font-medium" id="dashN8nStatus">Not configured</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                            <span class="text-sm">Voice Recognition</span>
+                                        </div>
+                                        <span class="text-xs text-emerald-500 font-medium">Ready</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Mobile Bottom Navigation -->
+            <nav class="md:hidden flex items-center justify-around py-2 px-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-20">
+                <button onclick="navigateTo('dashboard')" class="mobile-nav-item flex flex-col items-center gap-0.5 p-2 text-slate-400 transition-colors" data-view="dashboard">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    <span class="text-[10px]">Home</span>
+                </button>
+                <button onclick="navigateTo('chat')" class="mobile-nav-item active flex flex-col items-center gap-0.5 p-2 text-slate-400 transition-colors" data-view="chat">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <span class="text-[10px]">Chat</span>
+                </button>
+                <button onclick="navigateTo('tasks')" class="mobile-nav-item flex flex-col items-center gap-0.5 p-2 text-slate-400 transition-colors" data-view="tasks">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span class="text-[10px]">Tasks</span>
+                </button>
+                <button onclick="navigateTo('settings')" class="mobile-nav-item flex flex-col items-center gap-0.5 p-2 text-slate-400 transition-colors" data-view="settings">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="text-[10px]">Settings</span>
+                </button>
+            </nav>
+        </main>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="w-full max-w-md p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Add New Task</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Task Name</label>
+                    <input type="text" id="taskName" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea id="taskDesc" rows="2" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Due Date</label>
+                    <input type="date" id="taskDue" class="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-bob-500/50 outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="closeTaskModal()" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                    <button onclick="addTask()" class="flex-1 px-4 py-2 bg-bob-600 hover:bg-bob-500 text-white rounded-lg text-sm font-medium transition-colors">Add Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Modal -->
+    <div id="voiceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="w-full max-w-sm p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-accent-rose/20 flex items-center justify-center animate-pulse">
+                <svg class="w-10 h-10 text-accent-rose" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold mb-2">Listening...</h3>
+            <p class="text-sm text-slate-500 mb-6">Speak now. BOB is listening for your voice input.</p>
+            <button onclick="stopVoiceInput()" class="px-6 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-20 md:bottom-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+    <script>
+        // ==========================================
+        // BOB AI - Application State & Configuration
+        // ==========================================
+
+        // API Configuration - MODIFY THESE TO CONNECT YOUR BACKEND
+        const API_CONFIG = {
+            endpoint: localStorage.getItem('bob_api_endpoint') || 'https://api.bob-ai.local/v1',
+            key: localStorage.getItem('bob_api_key') || '',
+            n8nWebhook: localStorage.getItem('bob_n8n_webhook') || ''
+        };
+
+        // Application State
+        const state = {
+            currentView: 'chat',
+            currentMode: 'chat',
+            currentConversation: null,
+            conversations: [],
+            messages: [],
+            tasks: [],
+            projects: [],
+            automations: [],
+            sidebarOpen: false,
+            theme: localStorage.getItem('bob_theme') || 'dark',
+            voiceListening: false,
+            selectedFile: null,
+            selectedImage: null,
+            notifications: [],
+            typing: false
+        };
+
+        // Demo Data
+        const demoConversations = [
+            { id: 'conv_1', title: 'Welcome to BOB', timestamp: Date.now() - 86400000, messageCount: 3 },
+            { id: 'conv_2', title: 'Roblox Game Ideas', timestamp: Date.now() - 172800000, messageCount: 12 },
+            { id: 'conv_3', title: 'Code Review: Player Script', timestamp: Date.now() - 259200000, messageCount: 8 },
+        ];
+
+        const demoTasks = [
+            { id: 'task_1', name: 'Design BOB UI mockups', description: 'Create initial design concepts', due: '2026-09-01', completed: false },
+            { id: 'task_2', name: 'Set up n8n workflow', description: 'Connect webhook for automations', due: '2026-08-30', completed: false },
+            { id: 'task_3', name: 'Research AI models', description: 'Compare LLM options for backend', due: '2026-08-28', completed: true },
+        ];
+
+        const demoProjects = [
+            { id: 'proj_1', name: 'BOB AI Assistant', description: 'Personal AI assistant with multiple capabilities', status: 'active', tasks: 5 },
+            { id: 'proj_2', name: 'Roblox Game Framework', description: 'Reusable game systems and GUI components', status: 'active', tasks: 12 },
+        ];
+
+        // ==========================================
+        // SMART AI BRAIN - BOB's Intelligence Engine
+        // ==========================================
+
+        const BOBBrain = {
+            // Memory system
+            memory: {
+                facts: {},           // Key facts learned about user
+                preferences: {},     // User preferences
+                context: [],         // Recent conversation context (last 20 messages)
+                tasks: [],           // Tasks mentioned in conversation
+                topics: new Set(),   // Topics discussed
+                entities: new Set(), // Named entities (people, places, projects)
+            },
+            
+            // Knowledge base
+            knowledge: {
+                code: {
+                    lua: {
+                        patterns: {
+                            'player movement': 'Use Humanoid.WalkSpeed and Humanoid.JumpPower. Consider using BodyVelocity for custom physics.',
+                            'data store': 'Use DataStoreService:GetDataStore(name). Always pcall() save attempts. Use UpdateAsync for atomic operations.',
+                            'gui': 'Use ScreenGui in StarterGui. Access with PlayerGui. Use UIScale for responsive design.',
+                            'tool': 'Create Tool instance. Handle Equipped/Unequipped events. Store in Backpack.',
+                            'animation': 'Use Animator:LoadAnimation(Animation). Track with AnimationTrack. Set Priority.',
+                            'raycast': 'workspace:Raycast(origin, direction, params). Use RaycastParams to filter.',
+                            'tween': 'TweenService:Create(object, TweenInfo.new(time, easing), properties). Play() to start.',
+                            'remote event': 'FireServer/Client for one-way. Use :InvokeServer for request-response pattern.',
+                            'character': 'Wait for CharacterAdded. Use Humanoid.Died for respawn logic.',
+                            'pathfinding': 'PathfindingService:CreatePath(). ComputeAsync(). GetWaypoints().',
+                        },
+                        snippets: {
+                            'safe data save': `local function saveData(player, data)
+    local success, err = pcall(function()
+        dataStore:SetAsync(player.UserId, data)
+    end)
+    if not success then warn("Save failed:", err) end
+end`,
+                            'anti-cheat basic': `local remote = Instance.new("RemoteEvent")
+remote.OnServerEvent:Connect(function(player, data)
+    -- Validate on server, never trust client
+    if typeof(data) == "number" and data > 0 then
+        -- Process validated data
+    end
+end)`,
+                            'custom character controller': `local runService = game:GetService("RunService")
+local function onRenderStep(dt)
+    local moveDir = Vector3.new(input.X, 0, input.Y)
+    humanoid:Move(moveDir, true)
+end
+runService.RenderStepped:Connect(onRenderStep)`,
+                        }
+                    },
+                    javascript: {
+                        patterns: {
+                            'fetch api': 'Use fetch with async/await. Always handle errors with try/catch.',
+                            'dom manipulation': 'Use querySelector. Prefer event delegation. Avoid innerHTML for user content.',
+                            'local storage': 'JSON.stringify on save, JSON.parse on read. Wrap in try/catch.',
+                            'async': 'Use Promise.all for parallel. Always await or handle rejections.',
+                        }
+                    },
+                    python: {
+                        patterns: {
+                            'list comprehension': '[x for x in items if condition] - faster and more readable than loops.',
+                            'dictionary': 'Use get() with defaults. Consider defaultdict for automatic defaults.',
+                            'file handling': 'Use with open() as f: - ensures proper cleanup.',
+                            'requests': 'Always set timeout. Use sessions for connection pooling.',
+                        }
+                    }
+                },
+                research: {
+                    methods: {
+                        'web search': 'Use multiple sources. Check publication dates. Verify with primary sources.',
+                        'comparison': 'Create criteria matrix. Weight factors by importance. Document methodology.',
+                        'summarize': 'Extract key points first. Group by theme. Preserve nuance and caveats.',
+                    }
+                },
+                roblox: {
+                    bestPractices: [
+                        'Never trust the client - validate everything on server',
+                        'Use CollectionService for tagging instead of naming conventions',
+                        'Prefer attribute values over Value objects',
+                        'Use task.wait() instead of wait()',
+                        'ModuleScripts for shared logic, ServerScripts for server-only',
+                    ],
+                    commonMistakes: [
+                        'Using while true do wait() instead of event-driven programming',
+                        'Storing sensitive data on client',
+                        'Not handling DataStore errors',
+                        'Using deprecated methods like wait()',
+                        'Firing remotes every frame without throttling',
+                    ]
+                }
+            },
+            
+            // Intent detection patterns
+            intents: {
+                'create_task': /\b(add|create|make|set up)\s+(?:a\s+)?(?:new\s+)?task\b/i,
+                'list_tasks': /\b(list|show|what are|tell me about)\s+(?:my\s+)?tasks\b/i,
+                'complete_task': /\b(mark|set)\s+(?:task\s+)?(.+?)\s+(?:as\s+)?(?:done|complete|finished)\b/i,
+                'delete_task': /\b(delete|remove)\s+(?:task\s+)?(.+)\b/i,
+                'research': /\b(research|search|find|look up|investigate)\s+(.+)\b/i,
+                'code_help': /\b(code|script|program|write|debug|fix)\s+(?:a\s+)?(.+)\b/i,
+                'explain': /\b(explain|how does|what is|tell me about)\s+(.+)\b/i,
+                'roblox_specific': /\b(roblox|lua|luau|studio|game|script|part|model|gui|tool)\b/i,
+                'image_analyze': /\b(analyze|describe|what('s| is)|look at|see|read)\s+(?:this\s+)?(?:image|picture|screenshot)\b/i,
+                'file_process': /\b(process|parse|read|extract|analyze)\s+(?:this\s+)?(?:file|document|text)\b/i,
+                'automation': /\b(automate|workflow|n8n|trigger|connect|integration)\b/i,
+                'settings': /\b(setting|configure|change|update|preference)\b/i,
+                'help': /\b(help|assist|support|what can you do|capabilities)\b/i,
+            },
+            
+            // Tool definitions
+            tools: {
+                'web_search': {
+                    description: 'Search the web for current information',
+                    parameters: { query: 'string', sources: 'number' },
+                    execute: async (params) => {
+                        // Simulated - replace with real search API
+                        return {
+                            results: [
+                                { title: 'Result for: ' + params.query, url: 'https://example.com', snippet: 'This is a simulated search result.' }
+                            ],
+                            summary: 'Found information about ' + params.query
+                        };
+                    }
+                },
+                'code_generate': {
+                    description: 'Generate code based on requirements',
+                    parameters: { language: 'string', requirements: 'string' },
+                    execute: async (params) => {
+                        return BOBBrain.generateCode(params.language, params.requirements);
+                    }
+                },
+                'task_create': {
+                    description: 'Create a new task',
+                    parameters: { name: 'string', description: 'string', due: 'string' },
+                    execute: async (params) => {
+                        const task = await createTaskAPI({
+                            name: params.name,
+                            description: params.description || '',
+                            due: params.due || new Date().toISOString().split('T')[0],
+                            completed: false
+                        });
+                        state.tasks.push(task);
+                        renderTasks();
+                        updateDashboard();
+                        return { success: true, task };
+                    }
+                },
+                'task_list': {
+                    description: 'List all tasks',
+                    parameters: {},
+                    execute: async () => {
+                        return { tasks: state.tasks };
+                    }
+                },
+                'task_complete': {
+                    description: 'Mark a task as complete',
+                    parameters: { taskName: 'string' },
+                    execute: async (params) => {
+                        const task = state.tasks.find(t => 
+                            t.name.toLowerCase().includes(params.taskName.toLowerCase())
+                        );
+                        if (task) {
+                            task.completed = true;
+                            renderTasks();
+                            return { success: true, task };
+                        }
+                        return { success: false, error: 'Task not found' };
+                    }
+                },
+                'image_analyze': {
+                    description: 'Analyze an image',
+                    parameters: { image: 'base64' },
+                    execute: async (params) => {
+                        // Would connect to vision API
+                        return { description: 'Image analysis would go here with real vision API.' };
+                    }
+                },
+                'file_parse': {
+                    description: 'Parse and analyze a file',
+                    parameters: { content: 'string', type: 'string' },
+                    execute: async (params) => {
+                        return BOBBrain.analyzeFile(params.content, params.type);
+                    }
+                },
+                'n8n_trigger': {
+                    description: 'Trigger an n8n workflow',
+                    parameters: { workflow: 'string', data: 'object' },
+                    execute: async (params) => {
+                        if (!API_CONFIG.n8nWebhook) {
+                            return { success: false, error: 'n8n not configured' };
+                        }
+                        try {
+                            await triggerN8nWorkflow(API_CONFIG.n8nWebhook, params.data);
+                            return { success: true };
+                        } catch (e) {
+                            return { success: false, error: e.message };
+                        }
+                    }
+                }
+            },
+            
+            // Generate contextual response
+            async generateResponse(message, context, mode) {
+                const intent = this.detectIntent(message);
+                const entities = this.extractEntities(message);
+                const sentiment = this.analyzeSentiment(message);
+                
+                // Update memory
+                this.updateMemory(message, intent, entities);
+                
+                // Check for tool use
+                const toolCall = this.detectToolUse(message, intent);
+                if (toolCall) {
+                    const result = await this.executeTool(toolCall);
+                    return this.formatToolResponse(toolCall, result, message);
+                }
+                
+                // Generate contextual response based on mode and intent
+                switch (mode) {
+                    case 'research':
+                        return this.generateResearchResponse(message, intent, context);
+                    case 'code':
+                        return this.generateCodeResponse(message, intent, context);
+                    case 'roblox':
+                        return this.generateRobloxResponse(message, intent, context);
+                    default:
+                        return this.generateChatResponse(message, intent, context, sentiment);
+                }
+            },
+            
+            detectIntent(message) {
+                for (const [intent, pattern] of Object.entries(this.intents)) {
+                    if (pattern.test(message)) {
+                        const match = message.match(pattern);
+                        return { name: intent, match: match ? match[0] : null, groups: match ? match.slice(1) : [] };
+                    }
+                }
+                return { name: 'general_chat', match: null, groups: [] };
+            },
+            
+            extractEntities(message) {
+                const entities = [];
+                // Extract code-related terms
+                const codeTerms = message.match(/\b(function|variable|loop|class|method|API|database|server|client)\b/gi);
+                if (codeTerms) entities.push(...codeTerms);
+                // Extract potential task names (quoted or capitalized phrases)
+                const quoted = message.match(/"([^"]+)"/g);
+                if (quoted) entities.push(...quoted.map(q => q.slice(1, -1)));
+                return entities;
+            },
+            
+            analyzeSentiment(message) {
+                const positive = /\b(good|great|awesome|love|best|excellent|thanks|thank you)\b/i;
+                const negative = /\b(bad|terrible|hate|worst|awful|broken|bug|error|issue|problem)\b/i;
+                if (positive.test(message)) return 'positive';
+                if (negative.test(message)) return 'negative';
+                return 'neutral';
+            },
+            
+            updateMemory(message, intent, entities) {
+                // Store recent context
+                this.memory.context.push({ message, intent: intent.name, timestamp: Date.now() });
+                if (this.memory.context.length > 20) this.memory.context.shift();
+                
+                // Extract preferences
+                if (message.includes('I prefer') || message.includes('I like')) {
+                    const pref = message.match(/(?:prefer|like)\s+(.+)/i);
+                    if (pref) this.memory.preferences[pref[1].trim()] = true;
+                }
+                
+                // Store topics
+                entities.forEach(e => this.memory.topics.add(e));
+                
+                // Extract tasks from messages
+                if (intent.name === 'create_task' || message.includes('need to') || message.includes('should')) {
+                    const taskMatch = message.match(/(?:need to|should|must|have to)\s+(.+)/i);
+                    if (taskMatch) this.memory.tasks.push(taskMatch[1]);
+                }
+            },
+            
+            detectToolUse(message, intent) {
+                if (intent.name === 'create_task') {
+                    const name = intent.groups[1] || message.match(/task\s+(?:called\s+)?"?([^"]+)"?/i)?.[1] || 'New Task';
+                    return { tool: 'task_create', params: { name: name.trim(), description: message } };
+                }
+                if (intent.name === 'list_tasks') {
+                    return { tool: 'task_list', params: {} };
+                }
+                if (intent.name === 'complete_task') {
+                    return { tool: 'task_complete', params: { taskName: intent.groups[1] || intent.groups[0] } };
+                }
+                if (intent.name === 'research') {
+                    const query = intent.groups[1] || message.replace(/research|search|find|look up|investigate/i, '').trim();
+                    return { tool: 'web_search', params: { query, sources: 5 } };
+                }
+                if (intent.name === 'code_help') {
+                    const req = intent.groups[1] || message;
+                    const lang = message.match(/\b(lua|python|javascript|js|typescript|ts|html|css|rust|go|java|c\+\+)\b/i)?.[1] || 'javascript';
+                    return { tool: 'code_generate', params: { language: lang, requirements: req } };
+                }
+                if (message.includes('image') || message.includes('picture') || message.includes('screenshot')) {
+                    return { tool: 'image_analyze', params: {} };
+                }
+                if (intent.name === 'automation' && API_CONFIG.n8nWebhook) {
+                    return { tool: 'n8n_trigger', params: { workflow: 'default', data: { message } } };
+                }
+                return null;
+            },
+            
+            async executeTool(toolCall) {
+                const tool = this.tools[toolCall.tool];
+                if (!tool) return { error: 'Tool not found' };
+                try {
+                    return await tool.execute(toolCall.params);
+                } catch (e) {
+                    return { error: e.message };
+                }
+            },
+            
+            formatToolResponse(toolCall, result, originalMessage) {
+                if (result.error) {
+                    return `I tried to use the ${toolCall.tool} tool, but encountered an issue: ${result.error}. Let me help you directly instead.\n\n${this.generateFallbackResponse(originalMessage)}`;
+                }
+                
+                switch (toolCall.tool) {
+                    case 'task_create':
+                        return `✅ Created task: **"${result.task.name}"**\n\nI've added it to your task list. You can view all tasks in the Tasks section.`;
+                    case 'task_list':
+                        const active = result.tasks.filter(t => !t.completed);
+                        if (active.length === 0) return 'You have no active tasks! 🎉';
+                        return `📋 You have ${active.length} active task${active.length > 1 ? 's' : ''}:\n\n${active.map(t => `- ${t.name} (due: ${formatDateShort(t.due)})`).join('\n')}`;
+                    case 'task_complete':
+                        return `✅ Marked "${result.task.name}" as complete! Great job!`;
+                    case 'web_search':
+                        return `🔍 Research Results:\n\n${result.summary}\n\n**Sources:**\n${result.results.map(r => `- [${r.title}](${r.url})`).join('\n')}\n\nWould you like me to dive deeper into any specific aspect?`;
+                    case 'code_generate':
+                        return `💻 Here's the code:\n\n\`\`\`${toolCall.params.language}\n${result.code || result}\n\`\`\`\n\n**Explanation:**\n${result.explanation || 'This code handles the requirements you specified. Let me know if you need modifications or have questions!'}`;
+                    case 'image_analyze':
+                        return `🖼️ Image Analysis:\n\n${result.description}\n\nIf you have a specific question about the image, feel free to ask!`;
+                    case 'n8n_trigger':
+                        return `⚡ Triggered your n8n automation successfully! The workflow should be processing now.`;
+                    default:
+                        return `Tool executed successfully. Result: ${JSON.stringify(result, null, 2)}`;
+                }
+            },
+            
+            generateCode(language, requirements) {
+                const lang = language.toLowerCase();
+                const code = this.knowledge.code[lang];
+                
+                if (!code) {
+                    return {
+                        code: `// ${language} code for: ${requirements}\n// Please specify the language for better results`,
+                        explanation: 'I can generate code in Lua, JavaScript, Python, and more. Which language do you need?'
+                    };
+                }
+                
+                // Match patterns
+                for (const [pattern, info] of Object.entries(code.patterns || {})) {
+                    if (requirements.toLowerCase().includes(pattern)) {
+                        const snippet = code.snippets ? Object.entries(code.snippets).find(([k]) => requirements.toLowerCase().includes(k)) : null;
+                        return {
+                            code: snippet ? snippet[1] : `// Example for ${pattern}\n// ${info}\n\n// Add your implementation here`,
+                            explanation: info
+                        };
+                    }
+                }
+                
+                return {
+                    code: `// ${language} implementation for: ${requirements}\n// Generated by BOB\n\n// TODO: Implement based on requirements`,
+                    explanation: `I can help you write ${language} code. Could you provide more specific details about what you need?`
+                };
+            },
+            
+            analyzeFile(content, type) {
+                const lines = content.split('\n').length;
+                const chars = content.length;
+                
+                if (type.includes('json')) {
+                    try {
+                        const parsed = JSON.parse(content);
+                        return {
+                            type: 'JSON',
+                            structure: Object.keys(parsed),
+                            summary: `Valid JSON with ${Object.keys(parsed).length} top-level keys`,
+                            recommendations: ['Validate schema if consuming from API', 'Consider adding version field']
+                        };
+                    } catch (e) {
+                        return { type: 'JSON', error: 'Invalid JSON: ' + e.message };
+                    }
+                }
+                
+                if (type.includes('javascript') || type.includes('typescript')) {
+                    const functions = (content.match(/function\s+\w+/g) || []).length;
+                    const classes = (content.match(/class\s+\w+/g) || []).length;
+                    return {
+                        type: 'JavaScript/TypeScript',
+                        stats: { lines, functions, classes },
+                        summary: `${lines} lines, ${functions} functions, ${classes} classes`,
+                        recommendations: ['Add JSDoc comments', 'Consider TypeScript for type safety']
+                    };
+                }
+                
+                return { type: 'text', lines, chars, summary: `Text file with ${lines} lines` };
+            },
+            
+            generateChatResponse(message, intent, context, sentiment) {
+                // Check for follow-up questions
+                const lastTopic = this.memory.context.slice(-3).map(c => c.intent);
+                const isFollowUp = lastTopic.includes(intent.name) && this.memory.context.length > 2;
+                
+                // Personalize based on memory
+                const knownPrefs = Object.keys(this.memory.preferences);
+                const personalization = knownPrefs.length > 0 ? ` (I remember you prefer ${knownPrefs[knownPrefs.length - 1]})` : '';
+                
+                // Handle specific intents
+                if (intent.name === 'help') {
+                    return `I'm BOB, your personal AI assistant! Here's what I can do:${personalization}\n\n🧠 **Smart Chat** — Natural conversation with memory of your preferences\n🔍 **Web Research** — Search and synthesize current information\n💻 **Code Assistant** — Write, debug, and explain code in any language\n🎮 **Roblox Dev** — Lua/Luau scripts, GUIs, physics, networking\n✅ **Task Management** — Create, track, and complete tasks\n⚡ **Automations** — Connect to n8n workflows\n🖼️ **Image Analysis** — Describe and analyze uploaded images\n📁 **File Processing** — Parse JSON, code, documents\n\n**Try saying:**\n- "Research quantum computing"\n- "Write a Lua script for player movement"\n- "Add task: review game design doc"\n- "What are my tasks?"\n\nWhat would you like to work on?`;
+                }
+                
+                if (intent.name === 'explain') {
+                    const topic = intent.groups[1] || message;
+                    return this.generateExplanation(topic);
+                }
+                
+                // Context-aware response
+                let response = '';
+                if (isFollowUp) {
+                    response = `Continuing our discussion about ${intent.name.replace('_', ' ')}... `;
+                }
+                
+                // Sentiment-aware
+                if (sentiment === 'positive') {
+                    response += "Great to hear! ";
+                } else if (sentiment === 'negative') {
+                    response += "I understand your frustration. Let me help. ";
+                }
+                
+                response += this.generateContextualAnswer(message, intent, context);
+                
+                return response;
+            },
+            
+            generateExplanation(topic) {
+                const explanations = {
+                    'neural network': 'A neural network is a computing system inspired by biological brains. It consists of layers of interconnected nodes (neurons) that process information. Each connection has a weight that adjusts during training. Deep learning uses networks with many hidden layers.',
+                    'machine learning': 'Machine Learning is a subset of AI where systems learn from data without explicit programming. Types include: supervised (labeled data), unsupervised (pattern finding), and reinforcement learning (trial and error).',
+                    'blockchain': 'A blockchain is a distributed, immutable ledger. Data is stored in blocks linked cryptographically. Key features: decentralization, transparency, and immutability. Used in cryptocurrencies, smart contracts, and supply chain.',
+                    'api': 'An API (Application Programming Interface) defines how software components communicate. REST APIs use HTTP methods (GET, POST, PUT, DELETE). GraphQL allows flexible queries. WebSockets enable real-time bidirectional communication.',
+                };
+                
+                const lowerTopic = topic.toLowerCase();
+                for (const [key, value] of Object.entries(explanations)) {
+                    if (lowerTopic.includes(key)) return value;
+                }
+                
+                return `${topic} is an interesting topic. Let me break it down:\n\n**Core Concept:** It's a fundamental idea in its field with wide applications.\n\n**How it works:** The implementation typically involves multiple components working together, with trade-offs between simplicity, performance, and maintainability.\n\n**Why it matters:** Understanding this helps you build better systems and make informed decisions.\n\nWould you like me to go deeper into any specific aspect, or relate it to something you're working on?`;
+            },
+            
+            generateContextualAnswer(message, intent, context) {
+                // Check if asking about previous context
+                if (message.toLowerCase().includes('what did i say') || message.toLowerCase().includes('earlier')) {
+                    const recent = this.memory.context.slice(-3);
+                    if (recent.length > 1) {
+                        return `Earlier you mentioned: "${recent[recent.length - 2].message}"`;
+                    }
+                }
+                
+                // Check memory for related topics
+                const relatedTopics = Array.from(this.memory.topics).filter(t => 
+                    message.toLowerCase().includes(t.toLowerCase())
+                );
+                
+                let response = '';
+                if (relatedTopics.length > 0) {
+                    response = `We've discussed ${relatedTopics.join(', ')} before. `;
+                }
+                
+                // Smart fallback that actually tries to be helpful
+                if (message.includes('?')) {
+                    return response + `That's a great question. Based on what I know:\n\n**Short answer:** It depends on your specific context and requirements.\n\n**Key considerations:**\n- What problem are you trying to solve?\n- What constraints do you have (time, budget, tech stack)?\n- Who else needs to understand or maintain this?\n\nCould you share a bit more about your specific situation? That way I can give you a much more targeted and useful answer.`;
+                }
+                
+                return response + `I understand you're working on something interesting. To give you the best help, could you tell me:\n\n1. **Goal:** What are you trying to achieve?\n2. **Context:** What have you tried so far?\n3. **Blockers:** What's stopping you right now?\n\nThe more specific you are, the more I can leverage my knowledge of ${Array.from(this.memory.topics).slice(-3).join(', ') || 'various topics'} to help you.`;
+            },
+            
+            generateResearchResponse(message, intent, context) {
+                const query = intent.groups[1] || message.replace(/research|search|find|look up|investigate/gi, '').trim();
+                return `🔍 **Research Mode: "${query}"**\n\nI'll search multiple sources and synthesize findings. Here's my approach:\n\n1. **Search Strategy:** Broad initial search, then drill into authoritative sources\n2. **Source Evaluation:** Check publication date, author credentials, citations\n3. **Synthesis:** Cross-reference claims across sources\n4. **Output:** Structured summary with key findings and confidence levels\n\n**Simulated Results:**\n- Source A (High confidence): Relevant information found\n- Source B (Medium): Supporting data with some caveats\n- Source C (High): Recent development confirming trend\n\n**Summary:** The research on "${query}" shows [this would be populated with real search results from your backend API].\n\nTo get real research results, connect your web search API in Settings.`;
+            },
+            
+            generateCodeResponse(message, intent, context) {
+                const lang = message.match(/\b(lua|python|javascript|js|typescript|ts|html|css|rust|go|java|c\+\+|c#|kotlin|swift)\b/i)?.[1] || 'javascript';
+                const req = intent.groups[1] || message;
+                
+                const generated = this.generateCode(lang, req);
+                
+                return `💻 **Code Assistant Mode**\n\nLanguage: **${lang}**\nRequest: ${req}\n\n\`\`\`${lang}\n${generated.code}\n\`\`\`\n\n**Explanation:**\n${generated.explanation}\n\n**Best Practices for ${lang}:**\n${this.knowledge.code[lang.toLowerCase()] ? Object.values(this.knowledge.code[lang.toLowerCase()].patterns).slice(0, 3).map(p => `- ${p}`).join('\n') : '- Write clean, documented code\\n- Handle errors gracefully\\n- Test edge cases'}\n\nNeed me to explain any part, optimize, or adapt this to your specific use case?`;
+            },
+            
+            generateRobloxResponse(message, intent, context) {
+                const specific = message.match(/\b(player|character|gui|tool|animation|data store|remote|physics|pathfinding|tween|lighting|sound|particle)\b/i)?.[1] || 'general';
+                
+                const robloxKnowledge = {
+                    'player': 'Player management: Access via Players service. Character spawns at SpawnLocation. Use Player.CharacterAdded for setup.',
+                    'character': 'Character: Model with Humanoid. Use CharacterAdded/Removing events. Customize with StarterCharacter.',
+                    'gui': 'GUI: ScreenGui for 2D, BillboardGui for 3D labels, SurfaceGui for in-world displays. Use UIScale for responsiveness.',
+                    'tool': 'Tools: Instance.new("Tool"). Store in Backpack. Handle Equipped for activation. Use Tool.Activated for clicks.',
+                    'animation': 'Animations: Upload to creator dashboard. Load with Animator:LoadAnimation(). Use AnimationTracks for control.',
+                    'data store': 'DataStores: Use DataStoreService. Always pcall saves. Use UpdateAsync for atomic operations. Cache reads.',
+                    'remote': 'Remotes: RemoteEvent for one-way, RemoteFunction for request-response. Validate ALL server-side.',
+                    'physics': 'Physics: Use BodyMovers (legacy) or constraints (AlignPosition, AlignOrientation). AssemblyLinearVelocity for direct control.',
+                    'pathfinding': 'Pathfinding: PathfindingService:CreatePath(). ComputeAsync() then follow waypoints. Smooth with Tween.',
+                    'tween': 'Tweening: TweenService:Create(). Use for UI animations, part movement, color transitions. Custom easing with TweenInfo.',
+                };
+                
+                return `🎮 **Roblox Development Mode**\n\nTopic: **${specific}**\n\n${robloxKnowledge[specific] || 'Roblox development covers scripting (Lua/Luau), building, UI design, and game systems. What specifically do you need help with?'}\n\n**Best Practices:**\n${this.knowledge.roblox.bestPractices.slice(0, 4).map(b => `✅ ${b}`).join('\n')}\n\n**Common Mistakes to Avoid:**\n${this.knowledge.roblox.commonMistakes.slice(0, 3).map(m => `❌ ${m}`).join('\n')}\n\nWant me to write a complete script, debug existing code, or explain a specific system?`;
+            },
+            
+            generateFallbackResponse(message) {
+                return `I'm here to help with that. Let me know if you want me to:\n- Break this into steps\n- Research specific aspects\n- Write code or scripts\n- Create a task to track progress\n\nWhat would be most useful right now?`;
+            }
+        };
+
+        async function sendMessageToAPI(message, conversationId, mode = 'chat') {
+            // Use the smart brain instead of canned responses
+            const context = BOBBrain.memory.context.map(c => c.message);
+            const response = await BOBBrain.generateResponse(message, context, mode);
+            
+            return {
+                success: true,
+                message: response,
+                conversationId: conversationId || 'conv_' + Date.now(),
+                timestamp: Date.now(),
+                intent: BOBBrain.detectIntent(message).name,
+                toolsUsed: null // Would track if tools were invoked
+            };
+        }
+
+        async function uploadFileToAPI(file, conversationId) {
+            // TODO: Implement actual file upload to your API
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('conversationId', conversationId);
+            
+            // Simulated
+            await new Promise(r => setTimeout(r, 1500));
+            return { success: true, fileUrl: URL.createObjectURL(file), analysis: 'File uploaded successfully.' };
+        }
+
+        async function startResearchAPI(query) {
+            // TODO: Connect to your research API
+            await new Promise(r => setTimeout(r, 2000));
+            return { success: true, results: [], summary: 'Research completed for: ' + query };
+        }
+
+        async function runToolAPI(toolName, params) {
+            // TODO: Connect to your tools API
+            await new Promise(r => setTimeout(r, 500));
+            return { success: true, result: `Tool ${toolName} executed.` };
+        }
+
+        async function getConversationsFromAPI() {
+            // TODO: Fetch from your API
+            return state.conversations;
+        }
+
+        async function createConversationAPI() {
+            // TODO: Create via your API
+            const newConv = {
+                id: 'conv_' + Date.now(),
+                title: 'New Conversation',
+                timestamp: Date.now(),
+                messageCount: 0
+            };
+            return newConv;
+        }
+
+        async function getTasksFromAPI() {
+            // TODO: Fetch from your API
+            return state.tasks;
+        }
+
+        async function createTaskAPI(task) {
+            // TODO: Create via your API
+            return { ...task, id: 'task_' + Date.now() };
+        }
+
+        // n8n Integration
+        async function triggerN8nWorkflow(webhookUrl, data) {
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('n8n webhook failed:', error);
+                throw error;
+            }
+        }
+
+        // ==========================================
+        // UI Functions
+        // ==========================================
+
+        function init() {
+            // Load theme
+            applyTheme(state.theme);
+            
+            // Load demo data
+            state.conversations = [...demoConversations];
+            state.tasks = [...demoTasks];
+            state.projects = [...demoProjects];
+            
+            // Render initial state
+            renderConversations();
+            renderTasks();
+            renderProjects();
+            updateDashboard();
+            
+            // Set up textarea auto-resize
+            autoResize(document.getElementById('messageInput'));
+            
+            // Load saved API config
+            const savedEndpoint = localStorage.getItem('bob_api_endpoint');
+            const savedKey = localStorage.getItem('bob_api_key');
+            const savedN8n = localStorage.getItem('bob_n8n_webhook');
+            if (savedEndpoint) document.getElementById('apiEndpoint').value = savedEndpoint;
+            if (savedKey) document.getElementById('apiKey').value = savedKey;
+            if (savedN8n) {
+                document.getElementById('n8nWebhookUrl').value = savedN8n;
+                updateN8nStatus('Configured');
+            }
+            
+            // Check system preference for theme
+            if (state.theme === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', prefersDark);
+            }
+            
+            // Welcome notification
+            showToast('Welcome to BOB AI!', 'success');
+        }
+
+        // Navigation
+        function navigateTo(view) {
+            state.currentView = view;
+            
+            // Hide all views
+            document.querySelectorAll('#contentArea > div').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected view
+            const viewEl = document.getElementById(view + 'View') || document.getElementById('chatView');
+            viewEl.classList.remove('hidden');
+            
+            // Update mobile nav
+            document.querySelectorAll('.mobile-nav-item').forEach(el => {
+                el.classList.remove('active', 'text-bob-500');
+                el.classList.add('text-slate-400');
+                if (el.dataset.view === view) {
+                    el.classList.add('active', 'text-bob-500');
+                    el.classList.remove('text-slate-400');
+                }
+            });
+            
+            // Close sidebar on mobile
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('mobileOverlay').classList.add('hidden');
+            }
+            
+            // Update dashboard if needed
+            if (view === 'dashboard') updateDashboard();
+            
+            // Scroll messages to bottom if chat
+            if (view === 'chat') {
+                setTimeout(() => {
+                    const container = document.getElementById('messagesContainer');
+                    container.scrollTop = container.scrollHeight;
+                }, 100);
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        // Theme
+        function toggleTheme() {
+            const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        }
+
+        function applyTheme(theme) {
+            state.theme = theme;
+            localStorage.setItem('bob_theme', theme);
+            
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+            }
+        }
+
+        function changeTheme(value) {
+            if (value === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                applyTheme(prefersDark ? 'dark' : 'light');
+            } else {
+                applyTheme(value);
+            }
+        }
+
+        // Chat Functions
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text && !state.selectedFile && !state.selectedImage) return;
+            
+            const messageData = {
+                id: 'msg_' + Date.now(),
+                role: 'user',
+                content: text,
+                timestamp: Date.now(),
+                file: state.selectedFile,
+                image: state.selectedImage
+            };
+            
+            // Add to messages
+            state.messages.push(messageData);
+            renderMessage(messageData);
+            
+            // Clear input
+            input.value = '';
+            autoResize(input);
+            clearFile();
+            clearImage();
+            
+            // Hide welcome message
+            document.getElementById('welcomeMessage').classList.add('hidden');
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            try {
+                // Send to API
+                const response = await sendMessageToAPI(text, state.currentConversation, state.currentMode);
+                
+                // Add assistant response
+                const assistantMsg = {
+                    id: 'msg_' + Date.now(),
+                    role: 'assistant',
+                    content: response.message,
+                    timestamp: response.timestamp
+                };
+                state.messages.push(assistantMsg);
+                
+                hideTypingIndicator();
+                renderMessage(assistantMsg);
+                
+                // Update conversation
+                if (!state.currentConversation) {
+                    state.currentConversation = response.conversationId;
+                    const newConv = {
+                        id: response.conversationId,
+                        title: text.slice(0, 30) + (text.length > 30 ? '...' : ''),
+                        timestamp: Date.now(),
+                        messageCount: 2
+                    };
+                    state.conversations.unshift(newConv);
+                    renderConversations();
+                }
+                
+                // Scroll to bottom
+                scrollToBottom();
+                
+            } catch (error) {
+                hideTypingIndicator();
+                showToast('Failed to send message. Check your API configuration.', 'error');
+                console.error(error);
+            }
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById('messageInput').value = text;
+            autoResize(document.getElementById('messageInput'));
+            sendMessage();
+        }
+
+        function renderMessage(msg) {
+            const container = document.getElementById('messagesContainer');
+            const isUser = msg.role === 'user';
+            
+            const div = document.createElement('div');
+            div.className = `message-enter flex gap-4 ${isUser ? 'flex-row-reverse' : ''}`;
+            div.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg ${isUser ? 'bg-slate-200 dark:bg-slate-700' : 'bg-gradient-to-br from-bob-500 to-accent-violet'} flex items-center justify-center text-${isUser ? 'slate-600 dark:text-slate-300' : 'white'} text-sm font-bold">
+                    ${isUser ? 'You' : 'B'}
+                </div>
+                <div class="flex-1 max-w-3xl ${isUser ? 'text-right' : ''}">
+                    <div class="inline-block text-left px-4 py-3 rounded-2xl ${isUser ? 'bg-bob-600 text-white' : 'bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50'} shadow-sm">
+                        ${msg.image ? `<img src="${msg.image}" class="max-h-48 rounded-lg mb-2" alt="Uploaded image">` : ''}
+                        ${msg.file ? `<div class="flex items-center gap-2 mb-2 p-2 rounded bg-black/10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span class="text-sm">${msg.file.name}</span></div>` : ''}
+                        <div class="markdown-content text-sm leading-relaxed">${msg.role === 'assistant' ? marked.parse(msg.content) : escapeHtml(msg.content)}</div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-1 px-2">${formatTime(msg.timestamp)}</div>
+                </div>
+            `;
+            
+            container.appendChild(div);
+            scrollToBottom();
+            
+            // Highlight code blocks
+            div.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+
+        function showTypingIndicator() {
+            state.typing = true;
+            const container = document.getElementById('messagesContainer');
+            const div = document.createElement('div');
+            div.id = 'typingIndicator';
+            div.className = 'message-enter flex gap-4';
+            div.innerHTML = `
+                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-bob-500 to-accent-violet flex items-center justify-center text-white text-sm font-bold">B</div>
+                <div class="px-4 py-3 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                        <div class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            state.typing = false;
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Mode Switching
+        function setMode(mode) {
+            state.currentMode = mode;
+            
+            // Update UI
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-slate-900', 'dark:text-white');
+                btn.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+            
+            const activeBtn = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
+            activeBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
+            activeBtn.classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-slate-900', 'dark:text-white');
+            
+            // Update indicator
+            const indicators = {
+                chat: { icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', label: 'Chat' },
+                research: { icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', label: 'Research' },
+                code: { icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', label: 'Code' },
+                roblox: { icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z', label: 'Roblox' }
+            };
+            
+            const ind = indicators[mode];
+            document.getElementById('currentModeIndicator').innerHTML = `
+                <svg class="w-4 h-4 text-bob-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${ind.icon}"/></svg>
+                <span>${ind.label}</span>
+            `;
+        }
+
+        // Conversations
+        async function createConversation() {
+            const newConv = await createConversationAPI();
+            state.conversations.unshift(newConv);
+            state.currentConversation = newConv.id;
+            state.messages = [];
+            renderConversations();
+            
+            // Clear chat view
+            document.getElementById('messagesContainer').innerHTML = `
+                <div id="welcomeMessage" class="flex flex-col items-center justify-center h-full text-center px-4">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-bob-500 to-accent-violet flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-bob-500/20 mb-6 animate-float">
+                        B
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">Hello, I'm BOB</h2>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-md mb-8">Your personal AI assistant. I can chat, research the web, help with code, assist with Roblox development, manage tasks, and connect to your automations.</p>
+                </div>
+            `;
+            
+            navigateTo('chat');
+            showToast('New conversation started', 'success');
+        }
+
+        function renderConversations() {
+            const list = document.getElementById('conversationList');
+            list.innerHTML = state.conversations.map(conv => `
+                <button onclick="loadConversation('${conv.id}')" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors group ${conv.id === state.currentConversation ? 'bg-slate-100 dark:bg-slate-800/50' : ''}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium truncate">${escapeHtml(conv.title)}</div>
+                            <div class="text-[10px] text-slate-400">${formatDate(conv.timestamp)} · ${conv.messageCount} messages</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function loadConversation(id) {
+            state.currentConversation = id;
+            // TODO: Load messages from API
+            renderConversations();
+            navigateTo('chat');
+        }
+
+        // Tasks
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            const filter = document.querySelector('.task-filter.bg-bob-100, .task-filter.bg-bob-900\\/30')?.dataset.filter || 'all';
+            
+            let filtered = state.tasks;
+            if (filter === 'active') filtered = state.tasks.filter(t => !t.completed);
+            if (filter === 'completed') filtered = state.tasks.filter(t => t.completed);
+            
+            // Update stats
+            document.getElementById('taskCountTotal').textContent = state.tasks.length;
+            document.getElementById('taskCountActive').textContent = state.tasks.filter(t => !t.completed).length;
+            const overdue = state.tasks.filter(t => !t.completed && new Date(t.due) < new Date()).length;
+            document.getElementById('taskCountOverdue').textContent = overdue;
+            
+            list.innerHTML = filtered.map(task => `
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 ${task.completed ? 'opacity-60' : ''}">
+                    <button onclick="toggleTask('${task.id}')" class="w-5 h-5 rounded border-2 ${task.completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-slate-600'} flex items-center justify-center transition-colors">
+                        ${task.completed ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}
+                    </button>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium ${task.completed ? 'line-through text-slate-400' : ''}">${escapeHtml(task.name)}</div>
+                        <div class="text-xs text-slate-500">${escapeHtml(task.description || '')}</div>
+                    </div>
+                    <div class="text-xs ${new Date(task.due) < new Date() && !task.completed ? 'text-accent-rose font-medium' : 'text-slate-400'}">
+                        ${formatDateShort(task.due)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTasks(filter) {
+            document.querySelectorAll('.task-filter').forEach(btn => {
+                btn.classList.remove('bg-bob-100', 'dark:bg-bob-900/30', 'text-bob-700', 'dark:text-bob-300');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
+            activeBtn.classList.add('bg-bob-100', 'dark:bg-bob-900/30', 'text-bob-700', 'dark:text-bob-300');
+            activeBtn.classList.remove('text-slate-500');
+            renderTasks();
+        }
+
+        function toggleTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                renderTasks();
+                updateDashboard();
+            }
+        }
+
+        function showAddTaskModal() {
+            document.getElementById('taskModal').classList.remove('hidden');
+            document.getElementById('taskName').focus();
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskDesc').value = '';
+            document.getElementById('taskDue').value = '';
+        }
+
+        async function addTask() {
+            const name = document.getElementById('taskName').value.trim();
+            const desc = document.getElementById('taskDesc').value.trim();
+            const due = document.getElementById('taskDue').value;
+            
+            if (!name) {
+                showToast('Please enter a task name', 'error');
+                return;
+            }
+            
+            const task = await createTaskAPI({ name, description: desc, due: due || new Date().toISOString().split('T')[0], completed: false });
+            state.tasks.push(task);
+            renderTasks();
+            closeTaskModal();
+            updateDashboard();
+            showToast('Task added successfully', 'success');
+        }
+
+        // Projects
+        function renderProjects() {
+            const list = document.getElementById('projectsList');
+            list.innerHTML = state.projects.map(proj => `
+                <div class="p-5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 hover:border-bob-500/30 transition-all cursor-pointer">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-accent-violet to-bob-500 flex items-center justify-center text-white font-bold text-sm">
+                            ${proj.name.charAt(0)}
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${proj.status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}">
+                            ${proj.status}
+                        </span>
+                    </div>
+                    <h3 class="font-semibold mb-1">${escapeHtml(proj.name)}</h3>
+                    <p class="text-sm text-slate-500 mb-3">${escapeHtml(proj.description)}</p>
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        ${proj.tasks} tasks
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Automations
+        function updateN8nStatus(status) {
+            const el = document.getElementById('n8nStatus');
+            el.textContent = status;
+            if (status === 'Connected') {
+                el.className = 'px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
+            } else {
+                el.className = 'px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500';
+            }
+            document.getElementById('dashN8nStatus').textContent = status;
+        }
+
+        async function testN8nConnection() {
+            const url = document.getElementById('n8nWebhookUrl').value.trim();
+            if (!url) {
+                showToast('Please enter a webhook URL', 'error');
+                return;
+            }
+            
+            showToast('Testing connection...', 'info');
+            
+            try {
+                await triggerN8nWorkflow(url, { test: true, timestamp: Date.now() });
+                updateN8nStatus('Connected');
+                showToast('n8n connection successful!', 'success');
+            } catch (error) {
+                showToast('Connection failed. Check your webhook URL.', 'error');
+            }
+        }
+
+        function saveN8nConfig() {
+            const url = document.getElementById('n8nWebhookUrl').value.trim();
+            localStorage.setItem('bob_n8n_webhook', url);
+            API_CONFIG.n8nWebhook = url;
+            showToast('n8n configuration saved', 'success');
+        }
+
+        function toggleAutomation(type) {
+            const enabled = document.getElementById('trigger' + type.charAt(0).toUpperCase() + type.slice(1)).checked;
+            showToast(`${type} automation ${enabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        // Settings
+        function saveApiConfig() {
+            const endpoint = document.getElementById('apiEndpoint').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            
+            localStorage.setItem('bob_api_endpoint', endpoint);
+            localStorage.setItem('bob_api_key', key);
+            
+            API_CONFIG.endpoint = endpoint;
+            API_CONFIG.key = key;
+            
+            showToast('API settings saved', 'success');
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            document.getElementById('dashChatCount').textContent = state.conversations.length;
+            document.getElementById('dashTaskCount').textContent = state.tasks.filter(t => !t.completed).length;
+            document.getElementById('dashProjectCount').textContent = state.projects.length;
+            document.getElementById('dashAutoCount').textContent = API_CONFIG.n8nWebhook ? 1 : 0;
+        }
+
+        // File & Image Handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            state.selectedFile = file;
+            document.getElementById('filePreview').classList.remove('hidden');
+            document.getElementById('filePreviewName').textContent = file.name;
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.selectedImage = e.target.result;
+                document.getElementById('imagePreview').classList.remove('hidden');
+                document.getElementById('imagePreviewImg').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearFile() {
+            state.selectedFile = null;
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+
+        function clearImage() {
+            state.selectedImage = null;
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('imageInput').value = '';
+        }
+
+        // Voice Input
+        function toggleVoiceInput() {
+            if (state.voiceListening) {
+                stopVoiceInput();
+            } else {
+                startVoiceInput();
+            }
+        }
+
+        function startVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast('Voice recognition not supported in this browser', 'error');
+                return;
+            }
+            
+            state.voiceListening = true;
+            document.getElementById('voiceModal').classList.remove('hidden');
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('messageInput').value = transcript;
+                autoResize(document.getElementById('messageInput'));
+                stopVoiceInput();
+                // Optionally auto-send
+                // sendMessage();
+            };
+            
+            recognition.onerror = () => {
+                showToast('Voice recognition error', 'error');
+                stopVoiceInput();
+            };
+            
+            recognition.onend = () => {
+                stopVoiceInput();
+            };
+            
+            recognition.start();
+            state.recognition = recognition;
+        }
+
+        function stopVoiceInput() {
+            state.voiceListening = false;
+            document.getElementById('voiceModal').classList.add('hidden');
+            if (state.recognition) {
+                state.recognition.stop();
+                state.recognition = null;
+            }
+        }
+
+        // Notifications
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        function clearNotifications() {
+            state.notifications = [];
+            document.getElementById('notificationBadge').classList.add('hidden');
+            document.getElementById('notificationsList').innerHTML = '<div class="p-4 text-center text-sm text-slate-400">No new notifications</div>';
+        }
+
+        function addNotification(title, message, type = 'info') {
+            state.notifications.unshift({ title, message, type, timestamp: Date.now() });
+            document.getElementById('notificationBadge').classList.remove('hidden');
+            
+            const list = document.getElementById('notificationsList');
+            if (state.notifications.length === 1) list.innerHTML = '';
+            
+            const div = document.createElement('div');
+            div.className = 'p-3 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+            div.innerHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-accent-rose' : 'bg-bob-500'}"></div>
+                    <div class="font-medium text-sm">${title}</div>
+                </div>
+                <div class="text-xs text-slate-500">${message}</div>
+            `;
+            list.insertBefore(div, list.firstChild);
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const div = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-500',
+                error: 'bg-accent-rose',
+                info: 'bg-bob-600',
+                warning: 'bg-amber-500'
+            };
+            
+            div.className = `${colors[type] || colors.info} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium pointer-events-auto animate-slide-in flex items-center gap-2`;
+            div.innerHTML = `
+                ${type === 'success' ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}
+                ${type === 'error' ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}
+                ${message}
+            `;
+            
+            container.appendChild(div);
+            
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateX(10px)';
+                setTimeout(() => div.remove(), 300);
+            }, 3000);
+        }
+
+        // Utilities
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+            if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+            
+            return date.toLocaleDateString();
+        }
+
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
